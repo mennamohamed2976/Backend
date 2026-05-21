@@ -218,7 +218,45 @@ class UserChronicDisease(models.Model):
 
 
 # Patient & Donor Profiles
+# class PatientMedicalProfile(models.Model):
+#     patient = models.OneToOneField(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='patient_profile'
+#     )
+#     organ_needed = models.CharField(
+#         max_length=20,
+#         choices=OrganType.choices, default='كبد'
+#     )
+
+#     def __str__(self):
+#         return f"{self.patient} needs {self.organ_needed}"
+
+
+# class DonorMedicalProfile(models.Model):
+#     donor = models.OneToOneField(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='donor_profile'
+#     )
+#     organ_available = models.CharField(
+#         max_length=20,
+#         choices=OrganType.choices,
+#         default='كبد'
+#     )
+
+#     def __str__(self):
+#         return f"{self.donor} donates {self.organ_available}"
+
 class PatientMedicalProfile(models.Model):
+
+    URGENCY_CHOICES = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    )
+
     patient = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -226,14 +264,101 @@ class PatientMedicalProfile(models.Model):
     )
     organ_needed = models.CharField(
         max_length=20,
-        choices=OrganType.choices, default='كبد'
+        choices=OrganType.choices,
+        default='liver'
     )
+
+    # ✅ Dataset identifier (mirrors donor_code in DonorMedicalProfile)
+    recipient_id = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Recipient ID from dataset e.g. R000861"
+    )
+
+    urgency_level = models.CharField(
+        max_length=20,
+        choices=URGENCY_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Urgency level of the transplant"
+    )
+    waitlist_time_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of days the patient has been on the waiting list"
+    )
+    dialysis_duration_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Duration of dialysis in days (kidney patients only)"
+    )
+    MELD_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Model for End-Stage Liver Disease score (liver patients only)"
+    )
+    lung_severity_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Lung severity score (lung patients only)"
+    )
+
+    def clean(self):
+        KIDNEY_ORGANS = {'kidney', 'kidney_right', 'kidney_left'}
+        LIVER_ORGANS  = {'liver', 'liver_lobe'}
+        LUNG_ORGANS   = {'lung_right', 'lung_lobe'}
+
+        if self.dialysis_duration_days is not None and self.organ_needed not in KIDNEY_ORGANS:
+            raise ValidationError("dialysis_duration_days is only applicable for kidney patients.")
+
+        if self.MELD_score is not None and self.organ_needed not in LIVER_ORGANS:
+            raise ValidationError("MELD_score is only applicable for liver patients.")
+
+        if self.lung_severity_score is not None and self.organ_needed not in LUNG_ORGANS:
+            raise ValidationError("lung_severity_score is only applicable for lung patients.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.patient} needs {self.organ_needed}"
 
-
+class OrganPortion(models.TextChoices):
+    FULL = 'full', 'Full'
+    SEGMENT = 'segment', 'Segment'
+    LOBE = 'lobe', 'Lobe'
 class DonorMedicalProfile(models.Model):
+
+
+    DONATION_TYPE_CHOICES = (
+        ('living', 'Living'),
+        ('deceased', 'Deceased'),
+    )
+
+    ORGAN_PARTIAL_ALLOWED = {
+    'kidney': True,
+    'liver': True,
+    'heart': False,
+    'lung': False,
+    'pancreas': False,
+    }
+
+    organ_full_or_partial = models.CharField(
+        max_length=20,
+        choices=OrganPortion,
+        default='full'
+    )
+
+    donation_type = models.CharField(
+        max_length=20,
+        choices=DONATION_TYPE_CHOICES,
+        default='living'
+    )
+
+
     donor = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -242,8 +367,59 @@ class DonorMedicalProfile(models.Model):
     organ_available = models.CharField(
         max_length=20,
         choices=OrganType.choices,
-        default='كبد'
+        default='liver'
     )
+    kdpi_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Kidney Donor Profile Index (only for kidney donors)"
+    )
+
+    donor_code = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Donor ID from dataset e.g. D00748"
+    )
+ 
+    distance_km = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Distance in km between donor and recipient hospital"
+    )
+ 
+    cold_ischemia_limit_hours = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Maximum hours the organ can survive outside the body"
+    )
+
+    # def clean(self):
+    #     if self.organ_available != 'kidney' and self.kdpi_score is not None:
+    #         raise ValidationError("KDPI score is only applicable for kidney donors.")
+
+    def clean(self):
+        # ✅ KDPI مقبول لكل أنواع الكُلى (kidney, kidney_right, kidney_left)
+        KIDNEY_ORGANS = {'kidney', 'kidney_right', 'kidney_left'}
+ 
+        if self.organ_available not in KIDNEY_ORGANS and self.kdpi_score is not None:
+            raise ValidationError("KDPI score is only for kidney donors.")
+ 
+        PARTIAL_ALLOWED = {'kidney', 'kidney_right', 'kidney_left', 'liver', 'liver_lobe'}
+ 
+        if self.organ_full_or_partial not in ('full', OrganPortion.FULL) and \
+                self.organ_available not in PARTIAL_ALLOWED:
+            raise ValidationError(
+                f"{self.organ_available} cannot be partial donation."
+            )
+        
+
+
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.donor} donates {self.organ_available}"
