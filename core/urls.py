@@ -27,6 +27,8 @@ router.register(r'search/donors', DonorSearchViewSet, basename='donor-search')
 router.register(r'ministry/dashboard', MinistryDashboardViewSet, basename='ministry-dashboard')
 router.register(r'ministry-alerts', MinistryAlertViewSet, basename='ministry-alerts')
 router.register(r'vital-signs', VitalSignsViewSet)
+router.register(r'create-patient', PatientCreateViewSet, basename='create-patient')
+router.register(r'create-donor', DonorCreateViewSet, basename='create-donor')
 
 
 
