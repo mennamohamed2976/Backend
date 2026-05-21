@@ -1780,3 +1780,53 @@ class VitalSignsViewSet(viewsets.ModelViewSet):
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         return queryset
+
+
+
+
+
+
+class PatientCreateViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.filter(role='patient')
+    http_method_names = ['get', 'post']
+
+    def get_serializer_class(self):
+        if self.action == 'create':  # POST
+            return PatientCreateSerializer
+        return UserSerializer  # GET - list
+
+    def create(self, request, *args, **kwargs):
+        serializer = PatientCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({
+                "message": "تم إنشاء المريض بنجاح",
+                "id": user.id,
+                "role": user.role,
+                "token": token.key,
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DonorCreateViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.filter(role='donor')
+    http_method_names = ['get', 'post']
+
+    def get_serializer_class(self):
+        if self.action == 'create':  # POST
+            return DonorCreateSerializer
+        return UserSerializer  # GET - list
+
+    def create(self, request, *args, **kwargs):
+        serializer = DonorCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({
+                "message": "تم إنشاء المتبرع بنجاح",
+                "id": user.id,
+                "role": user.role,
+                "token": token.key,
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
