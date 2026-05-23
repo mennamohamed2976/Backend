@@ -360,7 +360,10 @@ class PatientPrioritySerializer(serializers.ModelSerializer):
     def get_patient_detail(self, obj):
         return {"id": obj.patient.id, "full_name": f"{obj.patient.first_name} {obj.patient.last_name}"}
 
-
+class DonorHealthStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonorHealthStatus
+        fields = ['id', 'donor', 'status', 'notes', 'updated_at']
 # doctor
 class DoctorSerializer(serializers.ModelSerializer):
     hospital_detail = HospitalSerializer(source='hospital', read_only=True)
@@ -554,6 +557,7 @@ class UserSerializer(serializers.ModelSerializer):
     mri_reports = serializers.SerializerMethodField()
     surgery_reports = serializers.SerializerMethodField()
     priority = serializers.SerializerMethodField()
+    health_status = serializers.SerializerMethodField()
     allergies = serializers.SerializerMethodField()
     user_medicines = serializers.SerializerMethodField()
     alerts = serializers.SerializerMethodField()
@@ -575,7 +579,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active', 'is_staff', 'created_at', 'medical_record_number', 'surgeries','vital_signs',
             # بيانات profile
             'organ_needed', 'organ_available', 'chronic_diseases', 'hospital_detail', 'supervisor_doctors_detail',
-            "appointments", "mri_reports", "surgery_reports", "priority", "alerts", 'user_reports'
+            "appointments", "mri_reports", "surgery_reports", "priority",'health_status', "alerts", 'user_reports'
         ]
         read_only_fields = ['bmi', 'created_at', 'updated_at']
 
@@ -655,20 +659,25 @@ class UserSerializer(serializers.ModelSerializer):
         return SurgeryReportSerializer(qs, many=True).data
 
     def get_priority(self, obj):
-        from .serializers import PatientPrioritySerializer
         try:
             priority = PatientPriority.objects.select_related('patient').get(patient=obj)
             return PatientPrioritySerializer(priority).data
         except PatientPriority.DoesNotExist:
             return None
+        
+    def get_health_status(self, obj):
+        if obj.role != 'donor':
+            return None
+        try:
+            return DonorHealthStatusSerializer(obj.health_status).data
+        except:
+            return None
 
     def get_alerts(self, obj):
-        from .serializers import AlertSerializer
         qs = Alert.objects.filter(user=obj)
         return AlertSerializer(qs, many=True).data
 
     def get_surgeries(self, obj):
-        from .serializers import SurgerySerializer
 
         if obj.role == 'patient':
             qs = Surgery.objects.filter(
