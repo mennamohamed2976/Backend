@@ -407,6 +407,19 @@ class PatientPriorityViewSet(viewsets.ModelViewSet):
         return Response(results)
 
 
+
+
+class DonorHealthStatusViewSet(viewsets.ModelViewSet):
+    queryset = DonorHealthStatus.objects.all()
+    serializer_class = DonorHealthStatusSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        donor_id = self.request.query_params.get('donor')
+        if donor_id:
+            queryset = queryset.filter(donor_id=donor_id)
+        return queryset
+
 # class AlertViewSet(viewsets.ModelViewSet):
 #     queryset = Alert.objects.all()
 #     serializer_class = AlertSerializer
