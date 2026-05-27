@@ -1,3 +1,4 @@
+# urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import *
@@ -18,6 +19,7 @@ router.register(r'mri-reports', MRIReportViewSet, basename='mri-report')
 router.register(r'UserReport', UserReportViewSet, basename='UserReport')
 router.register(r'surgery-reports', SurgeryReportViewSet, basename='surgery-reports')
 router.register(r'patient-priority', PatientPriorityViewSet, basename='patient-priority')
+router.register(r'donor-health-status', DonorHealthStatusViewSet,basename='donor-health-status')
 router.register(r'alerts', AlertViewSet, basename='alert')
 router.register(r'hospital-alerts', HospitalAlertViewSet, basename='hospital-alert')
 router.register(r'allergies', AllergyViewSet, basename='allergy')
