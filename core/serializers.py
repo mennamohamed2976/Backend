@@ -618,14 +618,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_supervisor_doctors_detail(self, obj):
         # access from User مباشرة
-        if obj.role == 'patient':
-            if obj.supervisor_doctor:
-                from .serializers import DoctorSerializer
-                return DoctorSerializer(obj.supervisor_doctor).data
+        # if obj.role == 'patient':
+        if obj.supervisor_doctor:
+            from .serializers import DoctorSerializer
+            return DoctorSerializer(obj.supervisor_doctor).data
 
-            return None
-
-        return []
+        return None
 
     def get_organ_available(self, obj):
         if obj.role == 'donor' and hasattr(obj, 'donor_profile'):
