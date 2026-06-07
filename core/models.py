@@ -1,3 +1,7 @@
+from django.test import TestCase
+
+# Create your tests here.
+# models.py
 import  uuid
 import binascii, os
 from django.db import models
@@ -127,11 +131,23 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name} ({self.role})"
 
 
-class OrganType(models.TextChoices):
-    كلية_يمنى = 'كلية يمنى', 'كلية يمنى'
-    كلية_يسرى = 'كلية يسرى', 'كلية يسرى'
-    كبد = 'كبد', 'كبد'
+# class OrganType(models.TextChoices):
+#     كلية_يمنى = 'كلية يمنى', 'كلية يمنى'
+#     كلية_يسرى = 'كلية يسرى', 'كلية يسرى'
+#     كبد = 'كبد', 'كبد'
 
+class OrganType(models.TextChoices):
+    KIDNEY           = 'kidney', 'kidney'
+    KIDNEY_RIGHT     = 'kidney_right', 'kidney_right'
+    KIDNEY_LEFT      = 'kidney_left', 'kidney_left'
+    LIVER            = 'liver', 'liver'
+    LIVER_LOBE       = 'liver_lobe', 'liver_lobe'
+    HEART            = 'heart', 'heart'
+    LUNG_RIGHT       = 'lung_right', 'lung_right'
+    LUNG_LOBE        = 'lung_lobe', 'lung_lobe'
+    LUNG_LEFT        = 'lung_left', 'lung_left'
+    PANCREAS         = 'pancreas', 'pancreas'
+    PANCREAS_SEGMENT = 'pancreas_segment', 'pancreas_segment'
 
 # Hospital & Doctor
 class Hospital(models.Model):
@@ -616,11 +632,11 @@ class OrganMatching(models.Model):
 # Surgery
 class Surgery(models.Model):
     SURGERY_STATUS = [
-        ('مجدولة', 'مجدولة'),
-        ('جاريه', 'جاريه'),
-        ('تمت بنجاح', 'تمت بنجاح'),
-        ('فشلت', 'فشلت'),
-        ('تحت المتابعة', 'تحت المتابعة'),
+        ('scheduled', 'scheduled'),
+        ('in_progress', 'in_progress'),
+        ('successful', 'successful'),
+        ('failed', 'failed'),
+        ('under_follow-up', 'under_follow-up'),
     ]
     DEPARTMENT_CHOICES = [
         
