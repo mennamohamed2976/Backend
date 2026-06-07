@@ -1,3 +1,4 @@
+# views.py
 from rest_framework import viewsets, status, generics ,permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -1246,378 +1247,647 @@ from django.db.models.functions import TruncMonth
 #             "alerts_statistics": alerts_stats,
 #         })
 from django.shortcuts import get_object_or_404
+# class MinistryDashboardViewSet(viewsets.ViewSet):
+
+#     def list(self, request):
+#         alert_id = request.query_params.get('alert')
+    
+#     # 🔴 حالة Alert واحد
+#         if alert_id:
+#             a = get_object_or_404(MinistryAlert, id=alert_id)
+
+#             return Response({
+#             "id": a.id,
+#             "message": a.message,
+#             "message_title": a.message_title,
+#             "alert_type": a.alert_type,
+#             "ALERT_Status": a.ALERT_Status,
+#             "priority": a.priority,
+#             "read": a.read,
+#             "description": a.description,
+#             "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+#             "sender_hospital": {
+#                 "id": a.sender_hospital.id if a.sender_hospital else None,
+#                 "name": a.sender_hospital.name if a.sender_hospital else None
+#             }
+#         })
+#         hospital_id = request.query_params.get('hospital')
+
+#         # 🟦 HOSPITAL DETAILS
+#         if hospital_id:
+#             h = get_object_or_404(Hospital, id=hospital_id)
+
+#             # 🔔 Alerts
+#             alerts_qs = AlertHospital.objects.filter(hospital=h).order_by('-created_at')
+            
+
+#             # 🏥 Surgeries
+#             surgeries_qs = Surgery.objects.filter(hospital=h)
+
+#             # 👥 counts
+#             patients_count = User.objects.filter(role='patient', hospital=h).count()
+#             donors_count = User.objects.filter(role='donor', hospital=h).count()
+
+#             total_surgeries = surgeries_qs.count()
+#             successful_surgeries = surgeries_qs.filter(status='مكتملة').count()
+
+#             success_percentage = (
+#                 round((successful_surgeries / total_surgeries) * 100, 2)
+#                 if total_surgeries > 0 else 0
+#             )
+#             # ✅ آخر 3 عمليات ناجحة لكل مستشفى
+#             latest_successful_qs = Surgery.objects.filter(
+#                 hospital=h,
+#                  status__in=['تمت بنجاح', 'فشلت']
+#             ).order_by('-created_at')[:3]
+
+#             if not latest_successful_qs.exists():
+#                 latest_successful = "مفيش عمليات ناجحة"
+#             else:
+#                 latest_successful = [
+#                     {
+#                         "id": s.id,
+#                         "surgery_number": s.surgery_number,
+#                         "surgery_name": s.surgery_name,
+#                         "doctor": str(s.doctor) if s.doctor else None,
+#                         "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
+#                         "scheduled_date": s.scheduled_date,
+#                         "status": s.status,
+#                         "patient_name": (
+#                             f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}"
+#                             if s.organ_matching and s.organ_matching.patient else None
+#                         ),
+#                         "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') 
+#                             if s.organ_matching and s.organ_matching.patient.birthdate else None,
+#                         "created_at": s.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+#                     }
+#                     for s in latest_successful_qs
+#                 ]
+            
+
+#             # 🧠 ORGANS NEEDED
+#             all_organs = [choice[0] for choice in OrganType.choices]
+
+#             organs_stats = Surgery.objects.filter(
+#                 hospital=h,
+#                 organ_matching__isnull=False
+#             ).values('organ_matching__organ_type') \
+#              .annotate(count=Count('id'))
+
+#             organs_dict = {
+#                 o['organ_matching__organ_type']: o['count']
+#                 for o in organs_stats
+#             }
+
+#             organs_needed = [
+#                 {
+#                     "organ": organ,
+#                     "count": organs_dict.get(organ, 0)
+#                 }
+#                 for organ in all_organs
+#             ]
+
+#             # 📦 RESPONSE
+#             return Response({
+#                 "id": h.id,
+#                 "name": h.name,
+#                 "location": h.location,
+#                 "hospital_type": h.hospital_type,
+#                 "status": h.status,
+#                 "phone": h.phone,
+#                 "email": h.email,
+#                 "patients_count": patients_count,
+#                 "donors_count": donors_count,
+#                 "total_surgeries": total_surgeries,
+#                 "successful_surgeries": successful_surgeries,
+#                 "success_percentage": success_percentage,
+#                 "latest_successful_surgeries": latest_successful,
+
+#                 # 🔔 alerts
+#                 "alerts": [
+#                     {
+#                         "id": a.id,
+#                         "message": a.message,
+#                         "message_title": a.message_title,
+#                         "alert_type": a.alert_type,
+#                         "read": a.read,
+#                         "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S')
+#                     }
+#                     for a in alerts_qs
+#                 ],
+
+#                 # 🏥 surgeries
+#                 "surgeries": [
+#                     {
+#                         "id": s.id,
+#                         "surgery_number": s.surgery_number,
+#                         "surgery_name": s.surgery_name,
+#                         "status": s.status,
+#                         "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
+#                         "scheduled_date": s.scheduled_date,
+#                         "scheduled_time": s.scheduled_time,
+#                         "created_at": s.created_at.strftime('%Y-%m-%d'),
+#                         "patient_name": (
+#                             f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}"
+#                             if s.organ_matching and s.organ_matching.patient else None
+#                         ),
+#                         "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient.birthdate else None
+#                     }
+#                     for s in surgeries_qs
+#                 ],
+
+#                 # 🧠 organs needed
+#                 "organs_needed": organs_needed,
+#             })
+
+
+#         total_hospitals = Hospital.objects.count()
+#         total_patients = User.objects.filter(role='patient').count()
+#         total_donors = User.objects.filter(role='donor').count()
+#         total_surgeries = Surgery.objects.count()
+#         successful_surgeries = Surgery.objects.filter(status='مكتملة').count()
+
+#         # بيانات كل مستشفى
+#         hospitals = Hospital.objects.all()
+#         alerts_qs = MinistryAlert.objects.all().order_by('-created_at')
+
+#         ministry_alerts_data = [
+#             {
+#                 "id": a.id,
+#                 "message_title": a.message_title,
+#                 "message": a.message,
+#                 "alert_type": a.alert_type,
+#                 "priority": a.priority,
+#                 "read": a.read,
+#                 "status": a.ALERT_Status,
+#                 "created_at": a.created_at.strftime('%Y-%m-%d'),
+#                 "hospital": a.sender_hospital.name if a.sender_hospital else None
+#             }
+#             for a in alerts_qs
+#         ]
+
+        
+#         alerts_stats = {
+#             "total_alerts": alerts_qs.count(),
+#             "unread_alerts": alerts_qs.filter(read=False).count(),
+#             "under_investigation": alerts_qs.filter(ALERT_Status="قيد التحقيق").count(),
+#             "resolved_alerts": alerts_qs.filter(alert_type='تم الحل').count(),
+#         }
+
+
+
+#         hospitals_data = []
+#         for h in hospitals:
+#             # 🔔 إشعارات الوزارة
+#             # التنبيهات الخاصة بالمستشفى
+#             alerts_qs = AlertHospital.objects.filter(hospital=h).order_by('-created_at')
+#             alerts_data = [
+#                 {
+#                     "id": a.id,
+#                     "message": a.message,
+#                     "message_title": a.message_title,
+#                     "alert_type": a.alert_type,
+#                     "read": a.read,
+#                     "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S')
+#                 }
+#                 for a in alerts_qs
+#             ]
+           
+#             surgeries_qs = Surgery.objects.filter(hospital=h)
+#             surgeries_list = [
+#                 {
+#                     "id": s.id,
+#                     "surgery_number": s.surgery_number,
+#                     "surgery_name": s.surgery_name,
+#                     "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
+#                     "status": s.status,
+#                     "scheduled_date": s.scheduled_date,
+#                     "scheduled_time": s.scheduled_time,
+#                     "created_at": s.created_at.strftime('%Y-%m-%d'),
+#                     "patient_name": str(s.organ_matching.patient) if s.organ_matching else None,
+#                     "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient.birthdate else None
+#                 }
+#                 for s in surgeries_qs
+#             ]
+            
+
+#             patients_count = User.objects.filter(role='patient', hospital=h).count()
+#             donors_count = User.objects.filter(role='donor', hospital=h).count()
+
+#             # العمليات في المستشفى
+#             surgeries_count = Surgery.objects.filter(hospital=h).count()
+#             successful_surgeries_count = Surgery.objects.filter(hospital=h, status='مكتملة').count()
+
+#             # كل أنواع الأعضاء من الـ choices
+#             all_organs = [choice[0] for choice in OrganType.choices]
+
+#             # بيانات من الداتابيز
+#             organs_needed = Surgery.objects.filter(
+#                 hospital=h,
+#                 organ_matching__isnull=False
+#             ).values('organ_matching__organ_type') \
+#             .annotate(count=Count('organ_matching__organ_type'))
+
+#             # نحولها dict
+#             organs_dict = {
+#                 o['organ_matching__organ_type']: o['count']
+#                 for o in organs_needed
+#             }
+
+#             # نضمن إن كل الأعضاء موجودة
+#             organs_needed_list = [
+#                 {
+#                     "organ": organ,
+#                     "count": organs_dict.get(organ, 0)  # 👈 لو مش موجود = 0
+#                 }
+#                 for organ in all_organs
+#             ]
+
+#             hospitals_data.append({
+#                 "id": h.id,
+#                 "name": h.name,
+#                 "location": h.location,
+#                 "hospital_type": h.hospital_type,
+#                 "status": h.status,
+#                 "phone": h.phone,
+#                 "email": h.email,
+#                 "patients_count": patients_count,
+#                 "donors_count": donors_count,
+#                 "total_surgeries": surgeries_count,
+#                 "successful_surgeries": successful_surgeries_count,
+#                 "success_percentage": round((successful_surgeries_count / surgeries_count) * 100, 2) if surgeries_count > 0 else 0,
+#                 "organs_needed": organs_needed_list,
+#                 "hospital_alerts": alerts_data,
+#                 "surgeries": surgeries_list,
+#                 # "latest_successful_surgeries": latest_successful,
+#             })
+#             hospitals_data.sort(key=lambda x: x['patients_count'], reverse=True)
+
+#             # إضافة حقل الترتيب لكل مستشفى
+#             for index, h_data in enumerate(hospitals_data, start=1):
+#                 h_data['rank'] = index
+
+
+#         all_organs = [choice[0] for choice in OrganType.choices]
+
+#         organ_data = []
+
+#         for organ in all_organs:
+#             count = Surgery.objects.filter(
+#                 organ_matching__organ_type=organ
+#             ).count()
+
+#             successful_count = Surgery.objects.filter(
+#                 organ_matching__organ_type=organ,
+#                 status='مكتملة'
+#             ).count()
+
+#             percentage = (
+#                 (count / total_surgeries) * 100
+#                 if total_surgeries > 0 else 0
+#             )
+
+#             success_percentage = (
+#                 (successful_count / count) * 100
+#                 if count > 0 else 0
+#             )
+
+#             organ_data.append({
+#                 "organ": organ,
+#                 "count": count,
+#                 "percentage": round(percentage, 2),
+#                 "successful_count": successful_count,
+#                 "success_percentage": round(success_percentage, 2)
+#             })
+
+#         now = datetime.now()
+
+#         # 🟢 بداية آخر 6 شهور
+#         start_date = (now - relativedelta(months=5)).replace(day=1)
+
+#         # 📊 بيانات من الداتابيز
+#         monthly_stats = Surgery.objects.filter(created_at__gte=start_date) \
+#             .annotate(month=TruncMonth('created_at')) \
+#             .values('month') \
+#             .annotate(
+#                 total=Count('id'),
+#                 successful=Count('id', filter=Q(status='مكتملة'))
+#             )
+
+#         # نحولها dict (year, month)
+#         stats_dict = {
+#             (stat['month'].year, stat['month'].month): stat
+#             for stat in monthly_stats
+#         }
+
+#         # 📅 نلف على آخر 6 شهور
+#         monthly_data = []
+
+#         for i in range(6):
+#             current = start_date + relativedelta(months=i)
+#             key = (current.year, current.month)
+
+#             stat = stats_dict.get(key)
+
+#             if stat:
+#                 total = stat['total']
+#                 successful = stat['successful']
+#             else:
+#                 total = 0
+#                 successful = 0
+
+#             monthly_data.append({
+#                 "month": format_date(current, format='MMMM', locale='ar'),
+#                 "year": current.year,
+#                 "month_number": current.month,
+#                 "total_surgeries": total,
+#                 "successful_surgeries": successful,
+#                 "success_percentage": round((successful / total) * 100, 2) if total > 0 else 0
+#             })
+
+
+#         return Response({
+#             "total_hospitals": total_hospitals,
+#             "total_patients": total_patients,
+#             "total_donors": total_donors,
+#             "total_surgeries": total_surgeries,
+#             "successful_surgeries": successful_surgeries,
+#             "hospitals": hospitals_data,
+#             "organs_stats": organ_data,
+#             "monthly_surgery_stats": monthly_data,
+#             "ministry_alerts": ministry_alerts_data,
+#             "alerts_statistics": alerts_stats,
+#         })
+
 class MinistryDashboardViewSet(viewsets.ViewSet):
 
     def list(self, request):
         alert_id = request.query_params.get('alert')
-    
-    # 🔴 حالة Alert واحد
+
+        # ====== Single Alert ======
         if alert_id:
             a = get_object_or_404(MinistryAlert, id=alert_id)
-
             return Response({
-            "id": a.id,
-            "message": a.message,
-            "message_title": a.message_title,
-            "alert_type": a.alert_type,
-            "ALERT_Status": a.ALERT_Status,
-            "priority": a.priority,
-            "read": a.read,
-            "description": a.description,
-            "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            "sender_hospital": {
-                "id": a.sender_hospital.id if a.sender_hospital else None,
-                "name": a.sender_hospital.name if a.sender_hospital else None
-            }
-        })
+                "id":             a.id,
+                "message":        a.message,
+                "message_title":  a.message_title,
+                "alert_type":     a.alert_type,
+                "ALERT_Status":   a.ALERT_Status,
+                "priority":       a.priority,
+                "read":           a.read,
+                "description":    a.description,
+                "created_at":     a.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "sender_hospital": {
+                    "id":   a.sender_hospital.id if a.sender_hospital else None,
+                    "name": a.sender_hospital.name if a.sender_hospital else None
+                }
+            })
+
         hospital_id = request.query_params.get('hospital')
 
-        # 🟦 HOSPITAL DETAILS
+        # ====== Single Hospital ======
         if hospital_id:
-            h = get_object_or_404(Hospital, id=hospital_id)
+            h                    = get_object_or_404(Hospital, id=hospital_id)
+            alerts_qs            = AlertHospital.objects.filter(hospital=h).order_by('-created_at')
+            surgeries_qs         = Surgery.objects.filter(hospital=h)
+            patients_count       = User.objects.filter(role='patient', hospital=h).count()
+            donors_count         = User.objects.filter(role='donor', hospital=h).count()
+            total_surgeries      = surgeries_qs.count()
+            successful_surgeries = surgeries_qs.filter(status='successful').count()
+            success_percentage   = round((successful_surgeries / total_surgeries) * 100, 2) if total_surgeries > 0 else 0
 
-            # 🔔 Alerts
-            alerts_qs = AlertHospital.objects.filter(hospital=h).order_by('-created_at')
-            
-
-            # 🏥 Surgeries
-            surgeries_qs = Surgery.objects.filter(hospital=h)
-
-            # 👥 counts
-            patients_count = User.objects.filter(role='patient', hospital=h).count()
-            donors_count = User.objects.filter(role='donor', hospital=h).count()
-
-            total_surgeries = surgeries_qs.count()
-            successful_surgeries = surgeries_qs.filter(status='مكتملة').count()
-
-            success_percentage = (
-                round((successful_surgeries / total_surgeries) * 100, 2)
-                if total_surgeries > 0 else 0
-            )
-            # ✅ آخر 3 عمليات ناجحة لكل مستشفى
             latest_successful_qs = Surgery.objects.filter(
-                hospital=h,
-                 status__in=['تمت بنجاح', 'فشلت']
+                hospital=h, status__in=['successful', 'failed']
             ).order_by('-created_at')[:3]
 
-            if not latest_successful_qs.exists():
-                latest_successful = "مفيش عمليات ناجحة"
-            else:
-                latest_successful = [
-                    {
-                        "id": s.id,
-                        "surgery_number": s.surgery_number,
-                        "surgery_name": s.surgery_name,
-                        "doctor": str(s.doctor) if s.doctor else None,
-                        "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
-                        "scheduled_date": s.scheduled_date,
-                        "status": s.status,
-                        "patient_name": (
-                            f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}"
-                            if s.organ_matching and s.organ_matching.patient else None
-                        ),
-                        "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') 
-                            if s.organ_matching and s.organ_matching.patient.birthdate else None,
-                        "created_at": s.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    }
-                    for s in latest_successful_qs
-                ]
-            
-
-            # 🧠 ORGANS NEEDED
-            all_organs = [choice[0] for choice in OrganType.choices]
-
-            organs_stats = Surgery.objects.filter(
-                hospital=h,
-                organ_matching__isnull=False
-            ).values('organ_matching__organ_type') \
-             .annotate(count=Count('id'))
-
-            organs_dict = {
-                o['organ_matching__organ_type']: o['count']
-                for o in organs_stats
-            }
-
-            organs_needed = [
+            latest_successful = [
                 {
-                    "organ": organ,
-                    "count": organs_dict.get(organ, 0)
+                    "id":             s.id,
+                    "surgery_number": s.surgery_number,
+                    "surgery_name":   s.surgery_name,
+                    "doctor":         str(s.doctor) if s.doctor else None,
+                    "organ_type":     s.organ_matching.organ_type if s.organ_matching else None,
+                    "scheduled_date": s.scheduled_date,
+                    "status":         s.status,
+                    "patient_name":   f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}" if s.organ_matching and s.organ_matching.patient else None,
+                    "birthdate":      s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient and s.organ_matching.patient.birthdate else None,
+                    "created_at":     s.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 }
-                for organ in all_organs
-            ]
+                for s in latest_successful_qs
+            ] if latest_successful_qs.exists() else []
 
-            # 📦 RESPONSE
+            all_organs   = [choice[0] for choice in OrganType.choices]
+            organs_stats = Surgery.objects.filter(hospital=h, organ_matching__isnull=False) \
+                .values('organ_matching__organ_type').annotate(count=Count('id'))
+            organs_dict  = {o['organ_matching__organ_type']: o['count'] for o in organs_stats}
+            organs_needed = [{"organ": organ, "count": organs_dict.get(organ, 0)} for organ in all_organs]
+
             return Response({
-                "id": h.id,
-                "name": h.name,
-                "location": h.location,
-                "hospital_type": h.hospital_type,
-                "status": h.status,
-                "phone": h.phone,
-                "email": h.email,
-                "patients_count": patients_count,
-                "donors_count": donors_count,
-                "total_surgeries": total_surgeries,
-                "successful_surgeries": successful_surgeries,
-                "success_percentage": success_percentage,
+                "id":               h.id,
+                "name":             h.name,
+                "location":         h.location,
+                "hospital_type":    h.hospital_type,
+                "status":           h.status,
+                "phone":            h.phone,
+                "email":            h.email,
+                "patients_count":   patients_count,
+                "donors_count":     donors_count,
+                "total_surgeries":  total_surgeries,
+                "successful_surgeries":      successful_surgeries,
+                "success_percentage":        success_percentage,
                 "latest_successful_surgeries": latest_successful,
-
-                # 🔔 alerts
                 "alerts": [
                     {
-                        "id": a.id,
-                        "message": a.message,
+                        "id":           a.id,
+                        "message":      a.message,
                         "message_title": a.message_title,
-                        "alert_type": a.alert_type,
-                        "read": a.read,
-                        "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                        "alert_type":   a.alert_type,
+                        "read":         a.read,
+                        "created_at":   a.created_at.strftime('%Y-%m-%d %H:%M:%S')
                     }
                     for a in alerts_qs
                 ],
-
-                # 🏥 surgeries
                 "surgeries": [
                     {
-                        "id": s.id,
+                        "id":             s.id,
                         "surgery_number": s.surgery_number,
-                        "surgery_name": s.surgery_name,
-                        "status": s.status,
-                        "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
+                        "surgery_name":   s.surgery_name,
+                        "organ_type":     s.organ_matching.organ_type if s.organ_matching else None,
+                        "status":         s.status,
                         "scheduled_date": s.scheduled_date,
                         "scheduled_time": s.scheduled_time,
-                        "created_at": s.created_at.strftime('%Y-%m-%d'),
-                        "patient_name": (
-                            f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}"
-                            if s.organ_matching and s.organ_matching.patient else None
-                        ),
-                        "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient.birthdate else None
+                        "created_at":     s.created_at.strftime('%Y-%m-%d'),
+                        "patient_name":   f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}" if s.organ_matching and s.organ_matching.patient else None,
+                        "birthdate":      s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient and s.organ_matching.patient.birthdate else None,
                     }
                     for s in surgeries_qs
                 ],
-
-                # 🧠 organs needed
                 "organs_needed": organs_needed,
             })
 
+        # ====== Full Dashboard ======
+        total_hospitals      = Hospital.objects.count()
+        total_patients       = User.objects.filter(role='patient').count()
+        total_donors         = User.objects.filter(role='donor').count()
+        total_surgeries      = Surgery.objects.count()
+        successful_surgeries = Surgery.objects.filter(status='successful').count()
 
-        total_hospitals = Hospital.objects.count()
-        total_patients = User.objects.filter(role='patient').count()
-        total_donors = User.objects.filter(role='donor').count()
-        total_surgeries = Surgery.objects.count()
-        successful_surgeries = Surgery.objects.filter(status='مكتملة').count()
-
-        # بيانات كل مستشفى
-        hospitals = Hospital.objects.all()
-        alerts_qs = MinistryAlert.objects.all().order_by('-created_at')
-
+        alerts_qs            = MinistryAlert.objects.all().order_by('-created_at')
         ministry_alerts_data = [
             {
-                "id": a.id,
+                "id":            a.id,
                 "message_title": a.message_title,
-                "message": a.message,
-                "alert_type": a.alert_type,
-                "priority": a.priority,
-                "read": a.read,
-                "status": a.ALERT_Status,
-                "created_at": a.created_at.strftime('%Y-%m-%d'),
-                "hospital": a.sender_hospital.name if a.sender_hospital else None
+                "message":       a.message,
+                "alert_type":    a.alert_type,
+                "priority":      a.priority,
+                "read":          a.read,
+                "status":        a.ALERT_Status,
+                "created_at":    a.created_at.strftime('%Y-%m-%d'),
+                "hospital":      a.sender_hospital.name if a.sender_hospital else None
             }
             for a in alerts_qs
         ]
 
-        
         alerts_stats = {
-            "total_alerts": alerts_qs.count(),
-            "unread_alerts": alerts_qs.filter(read=False).count(),
-            "under_investigation": alerts_qs.filter(ALERT_Status="قيد التحقيق").count(),
-            "resolved_alerts": alerts_qs.filter(alert_type='تم الحل').count(),
+            "total_alerts":        alerts_qs.count(),
+            "unread_alerts":       alerts_qs.filter(read=False).count(),
+            "under_investigation": alerts_qs.filter(ALERT_Status='قيد التحقيق').count(),
+            "resolved_alerts":     alerts_qs.filter(alert_type='تم الحل').count(),
         }
 
-
-
+        hospitals      = Hospital.objects.all()
         hospitals_data = []
+        all_organs     = [choice[0] for choice in OrganType.choices]
+
         for h in hospitals:
-            # 🔔 إشعارات الوزارة
-            # التنبيهات الخاصة بالمستشفى
-            alerts_qs = AlertHospital.objects.filter(hospital=h).order_by('-created_at')
-            alerts_data = [
+            surgeries_qs              = Surgery.objects.filter(hospital=h)
+            surgeries_count           = surgeries_qs.count()
+            successful_surgeries_count = surgeries_qs.filter(status='successful').count()
+
+            latest_successful_qs = Surgery.objects.filter(
+                hospital=h, status__in=['successful', 'فشلت']
+            ).order_by('-created_at')[:3]
+
+            latest_successful = [
                 {
-                    "id": a.id,
-                    "message": a.message,
-                    "message_title": a.message_title,
-                    "alert_type": a.alert_type,
-                    "read": a.read,
-                    "created_at": a.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    "id":             s.id,
+                    "surgery_number": s.surgery_number,
+                    "surgery_name":   s.surgery_name,
+                    "doctor":         str(s.doctor) if s.doctor else None,
+                    "organ_type":     s.organ_matching.organ_type if s.organ_matching else None,
+                    "scheduled_date": s.scheduled_date,
+                    "status":         s.status,
+                    "patient_name":   f"{s.organ_matching.patient.first_name} {s.organ_matching.patient.last_name}" if s.organ_matching and s.organ_matching.patient else None,
+                    "birthdate":      s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient and s.organ_matching.patient.birthdate else None,
+                    "created_at":     s.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 }
-                for a in alerts_qs
+                for s in latest_successful_qs
+            ] if latest_successful_qs.exists() else []
+
+            organs_needed      = Surgery.objects.filter(hospital=h, organ_matching__isnull=False) \
+                .values('organ_matching__organ_type').annotate(count=Count('organ_matching__organ_type'))
+            organs_dict        = {o['organ_matching__organ_type']: o['count'] for o in organs_needed}
+            organs_needed_list = [{"organ": organ, "count": organs_dict.get(organ, 0)} for organ in all_organs]
+
+            hospital_alerts_data = [
+                {
+                    "id":            a.id,
+                    "message":       a.message,
+                    "message_title": a.message_title,
+                    "alert_type":    a.alert_type,
+                    "read":          a.read,
+                    "created_at":    a.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                for a in AlertHospital.objects.filter(hospital=h).order_by('-created_at')
             ]
-           
-            surgeries_qs = Surgery.objects.filter(hospital=h)
+
             surgeries_list = [
                 {
-                    "id": s.id,
+                    "id":             s.id,
                     "surgery_number": s.surgery_number,
-                    "surgery_name": s.surgery_name,
-                    "organ_type": s.organ_matching.organ_type if s.organ_matching else None,
-                    "status": s.status,
+                    "surgery_name":   s.surgery_name,
+                    "organ_type":     s.organ_matching.organ_type if s.organ_matching else None,
+                    "status":         s.status,
                     "scheduled_date": s.scheduled_date,
                     "scheduled_time": s.scheduled_time,
-                    "created_at": s.created_at.strftime('%Y-%m-%d'),
-                    "patient_name": str(s.organ_matching.patient) if s.organ_matching else None,
-                    "birthdate": s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient.birthdate else None
+                    "created_at":     s.created_at.strftime('%Y-%m-%d'),
+                    "patient_name":   str(s.organ_matching.patient) if s.organ_matching else None,
+                    "birthdate":      s.organ_matching.patient.birthdate.strftime('%Y-%m-%d') if s.organ_matching and s.organ_matching.patient and s.organ_matching.patient.birthdate else None,
                 }
                 for s in surgeries_qs
             ]
-            
-
-            patients_count = User.objects.filter(role='patient', hospital=h).count()
-            donors_count = User.objects.filter(role='donor', hospital=h).count()
-
-            # العمليات في المستشفى
-            surgeries_count = Surgery.objects.filter(hospital=h).count()
-            successful_surgeries_count = Surgery.objects.filter(hospital=h, status='مكتملة').count()
-
-            # كل أنواع الأعضاء من الـ choices
-            all_organs = [choice[0] for choice in OrganType.choices]
-
-            # بيانات من الداتابيز
-            organs_needed = Surgery.objects.filter(
-                hospital=h,
-                organ_matching__isnull=False
-            ).values('organ_matching__organ_type') \
-            .annotate(count=Count('organ_matching__organ_type'))
-
-            # نحولها dict
-            organs_dict = {
-                o['organ_matching__organ_type']: o['count']
-                for o in organs_needed
-            }
-
-            # نضمن إن كل الأعضاء موجودة
-            organs_needed_list = [
-                {
-                    "organ": organ,
-                    "count": organs_dict.get(organ, 0)  # 👈 لو مش موجود = 0
-                }
-                for organ in all_organs
-            ]
 
             hospitals_data.append({
-                "id": h.id,
-                "name": h.name,
-                "location": h.location,
-                "hospital_type": h.hospital_type,
-                "status": h.status,
-                "phone": h.phone,
-                "email": h.email,
-                "patients_count": patients_count,
-                "donors_count": donors_count,
-                "total_surgeries": surgeries_count,
-                "successful_surgeries": successful_surgeries_count,
-                "success_percentage": round((successful_surgeries_count / surgeries_count) * 100, 2) if surgeries_count > 0 else 0,
-                "organs_needed": organs_needed_list,
-                "hospital_alerts": alerts_data,
-                "surgeries": surgeries_list,
-                # "latest_successful_surgeries": latest_successful,
+                "id":                          h.id,
+                "name":                        h.name,
+                "location":                    h.location,
+                "hospital_type":               h.hospital_type,
+                "status":                      h.status,
+                "phone":                       h.phone,
+                "email":                       h.email,
+                "patients_count":              User.objects.filter(role='patient', hospital=h).count(),
+                "donors_count":                User.objects.filter(role='donor', hospital=h).count(),
+                "total_surgeries":             surgeries_count,
+                "successful_surgeries":        successful_surgeries_count,
+                "success_percentage":          round((successful_surgeries_count / surgeries_count) * 100, 2) if surgeries_count > 0 else 0,
+                "latest_successful_surgeries": latest_successful,
+                "organs_needed":               organs_needed_list,
+                "hospital_alerts":             hospital_alerts_data,
+                "surgeries":                   surgeries_list,
             })
-            hospitals_data.sort(key=lambda x: x['patients_count'], reverse=True)
 
-            # إضافة حقل الترتيب لكل مستشفى
-            for index, h_data in enumerate(hospitals_data, start=1):
-                h_data['rank'] = index
-
-
-        all_organs = [choice[0] for choice in OrganType.choices]
+        hospitals_data.sort(key=lambda x: x['patients_count'], reverse=True)
+        for index, h_data in enumerate(hospitals_data, start=1):
+            h_data['rank'] = index
 
         organ_data = []
-
         for organ in all_organs:
-            count = Surgery.objects.filter(
-                organ_matching__organ_type=organ
-            ).count()
-
-            successful_count = Surgery.objects.filter(
-                organ_matching__organ_type=organ,
-                status='مكتملة'
-            ).count()
-
-            percentage = (
-                (count / total_surgeries) * 100
-                if total_surgeries > 0 else 0
-            )
-
-            success_percentage = (
-                (successful_count / count) * 100
-                if count > 0 else 0
-            )
-
+            count            = Surgery.objects.filter(organ_matching__organ_type=organ).count()
+            successful_count = Surgery.objects.filter(organ_matching__organ_type=organ, status='successful').count()
             organ_data.append({
-                "organ": organ,
-                "count": count,
-                "percentage": round(percentage, 2),
-                "successful_count": successful_count,
-                "success_percentage": round(success_percentage, 2)
+                "organ":              organ,
+                "count":              count,
+                "percentage":         round((count / total_surgeries) * 100, 2) if total_surgeries > 0 else 0,
+                "successful_count":   successful_count,
+                "success_percentage": round((successful_count / count) * 100, 2) if count > 0 else 0,
             })
 
-        now = datetime.now()
-
-        # 🟢 بداية آخر 6 شهور
+        now        = datetime.now()
         start_date = (now - relativedelta(months=5)).replace(day=1)
-
-        # 📊 بيانات من الداتابيز
         monthly_stats = Surgery.objects.filter(created_at__gte=start_date) \
             .annotate(month=TruncMonth('created_at')) \
             .values('month') \
-            .annotate(
-                total=Count('id'),
-                successful=Count('id', filter=Q(status='مكتملة'))
-            )
+            .annotate(total=Count('id'), successful=Count('id', filter=Q(status='successful')))
 
-        # نحولها dict (year, month)
-        stats_dict = {
-            (stat['month'].year, stat['month'].month): stat
-            for stat in monthly_stats
-        }
-
-        # 📅 نلف على آخر 6 شهور
+        stats_dict   = {(s['month'].year, s['month'].month): s for s in monthly_stats}
         monthly_data = []
-
         for i in range(6):
-            current = start_date + relativedelta(months=i)
-            key = (current.year, current.month)
-
-            stat = stats_dict.get(key)
-
-            if stat:
-                total = stat['total']
-                successful = stat['successful']
-            else:
-                total = 0
-                successful = 0
-
+            current    = start_date + relativedelta(months=i)
+            key        = (current.year, current.month)
+            stat       = stats_dict.get(key)
+            total      = stat['total'] if stat else 0
+            successful = stat['successful'] if stat else 0
             monthly_data.append({
-                "month": format_date(current, format='MMMM', locale='ar'),
-                "year": current.year,
-                "month_number": current.month,
-                "total_surgeries": total,
+                "month":                format_date(current, format='MMMM', locale='ar'),
+                "year":                 current.year,
+                "month_number":         current.month,
+                "total_surgeries":      total,
                 "successful_surgeries": successful,
-                "success_percentage": round((successful / total) * 100, 2) if total > 0 else 0
+                "success_percentage":   round((successful / total) * 100, 2) if total > 0 else 0,
             })
 
-
         return Response({
-            "total_hospitals": total_hospitals,
-            "total_patients": total_patients,
-            "total_donors": total_donors,
-            "total_surgeries": total_surgeries,
-            "successful_surgeries": successful_surgeries,
-            "hospitals": hospitals_data,
-            "organs_stats": organ_data,
+            "total_hospitals":       total_hospitals,
+            "total_patients":        total_patients,
+            "total_donors":          total_donors,
+            "total_surgeries":       total_surgeries,
+            "successful_surgeries":  successful_surgeries,
+            "hospitals":             hospitals_data,
+            "organs_stats":          organ_data,
             "monthly_surgery_stats": monthly_data,
-            "ministry_alerts": ministry_alerts_data,
-            "alerts_statistics": alerts_stats,
+            "ministry_alerts":       ministry_alerts_data,
+            "alerts_statistics":     alerts_stats,
         })
-
 # from rest_framework.permissions import AllowAny
 
 # class MinistryAlertViewSet(viewsets.ModelViewSet):
