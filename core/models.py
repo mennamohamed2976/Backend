@@ -698,9 +698,10 @@ class MRIReport(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mri_reports')
     # organ_type = models.CharField(max_length=50)
 
-    before_scan = models.FileField(upload_to='mri/before/', null=True, blank=True)
-    after_scan = models.FileField(upload_to='mri/after/', null=True, blank=True)
-
+    Before Scan = models.FileField(upload_to='mri/before/', null=True, blank=True)
+    After Scan = models.FileField(upload_to='mri/after/', null=True, blank=True)
+    NLP Report = models.FileField(upload_to='mri/after/', null=True, blank=True)
+    
     ai_result = models.TextField(null=True, blank=True)
     mismatch_alert = models.BooleanField(default=False)
 
