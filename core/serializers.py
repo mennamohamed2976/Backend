@@ -383,7 +383,7 @@ class MRIReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MRIReport
-        fields = ['id', 'patient', 'patient_detail', 'before_scan', 'after_scan',
+        fields = ['id', 'patient', 'patient_detail', 'before_scan', 'after_scan','npl_report',
                   'ai_result', 'mismatch_alert', 'created_at']
 
 
