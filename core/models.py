@@ -700,7 +700,7 @@ class MRIReport(models.Model):
 
     Before Scan = models.FileField(upload_to='mri/before/', null=True, blank=True)
     After Scan = models.FileField(upload_to='mri/after/', null=True, blank=True)
-    NLP Report = models.FileField(upload_to='mri/after/', null=True, blank=True)
+    npl report = models.FileField(upload_to='mri/npl/', null=True, blank=True)
     
     ai_result = models.TextField(null=True, blank=True)
     mismatch_alert = models.BooleanField(default=False)
