@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import *
+from .views import DonorHealthStatusViewSet
 
 router = DefaultRouter()
 # router.register(r'ministry', MinistryViewSet, basename='ministry'),
@@ -10,6 +11,7 @@ router.register(r'doctors', DoctorViewSet, basename='doctor')
 router.register(r'chronic-diseases', ChronicDiseaseViewSet, basename='chronic-disease')
 router.register(r'user-chronic-diseases', UserChronicDiseaseViewSet, basename='user-chronic-disease')
 router.register(r'patient-profiles', PatientMedicalProfileViewSet, basename='patient-profile')
+router.register(r'donor-health-status', DonorHealthStatusViewSet, basename='donor-health-status')
 router.register(r'donor-profiles', DonorMedicalProfileViewSet, basename='donor-profile')
 router.register(r'appointments', AppointmentViewSet, basename='appointment')
 router.register(r'organ-matching', OrganMatchingViewSet, basename='organ-matching')
@@ -22,6 +24,7 @@ router.register(r'alerts', AlertViewSet, basename='alert')
 router.register(r'hospital-alerts', HospitalAlertViewSet, basename='hospital-alert')
 router.register(r'allergies', AllergyViewSet, basename='allergy')
 router.register(r'medicines', MedicineViewSet, basename='medicine')
+router.register(r'vital-signs',  VitalSignsViewSet,  basename='vital-signs')
 router.register(r'search/patients', PatientSearchViewSet, basename='patient-search')
 router.register(r'search/donors', DonorSearchViewSet, basename='donor-search')
 router.register(r'ministry/dashboard', MinistryDashboardViewSet, basename='ministry-dashboard')
